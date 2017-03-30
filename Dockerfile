@@ -20,6 +20,10 @@ RUN echo "deb http://packages.dotdeb.org squeeze all" >> /etc/apt/sources.list.d
 	echo "deb-src http://packages.dotdeb.org squeeze all" >> /etc/apt/sources.list.d/dotdeb.org.list && \
 	wget -O- http://www.dotdeb.org/dotdeb.gpg | apt-key add -
 
+# Install util
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
+	DEBIAN_FRONTEND=noninteractive apt-get install -y nano vim git
+
 # Install PHP 5.5
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 	DEBIAN_FRONTEND=noninteractive apt-get install -y php5-cli php5 php5-mcrypt php5-curl php5-pgsql postgresql-contrib phppgadmin
@@ -40,9 +44,12 @@ RUN sed -i 's/;include_path = ".:\/usr\/share\/php"/include_path = ".:\/var\/www
 RUN a2enmod rewrite
 
 # Fix phppgadmin
-ADD ./phppgadmin.conf /etc/apache2/conf.d/phppgadmin
 ADD ./config.inc.php /usr/share/phppgadmin/conf/config.inc.php
 RUN sed -i 's/variables_order = "GPCS"/variables_order = "EGPCS"/g' /etc/php5/apache2/php.ini 
+RUN sed -i 's/variables_order = "GPCS"/variables_order = "EGPCS"/g' /etc/php5/cli/php.ini 
+
+RUN service apache2 start
+RUN systemctl enable apache2
 
 # Set Apache environment variables (can be changed on docker run with -e)
 ENV APACHE_RUN_USER www-data
